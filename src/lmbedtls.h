@@ -36,6 +36,7 @@
 #include "hexcodec.h"
 #include "lauxhlib.h"
 // mbedtls headers
+#include "mbedtls/error.h"
 #include "mbedtls/md.h"
 #include "mbedtls/md5.h"
 #include "mbedtls/sha1.h"
@@ -43,6 +44,8 @@
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
 #include "mbedtls/ripemd160.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
 
 
 // memory alloc/dealloc
@@ -86,11 +89,23 @@
 })
 
 
+// helper functions
+
+typedef char lmbedtls_errbuf_t[BUFSIZ];
+
+static inline void lmbedtls_strerror( int rc, lmbedtls_errbuf_t errbuf )
+{
+    mbedtls_strerror( rc, errbuf, BUFSIZ );
+}
+
+
 // define module names
+#define LMBEDTLS_RNG_MT     "mbedtls.rng"
 
 
 // define prototypes
 LUALIB_API int luaopen_mbedtls_hash( lua_State *L );
+LUALIB_API int luaopen_mbedtls_rng( lua_State *L );
 
 
 
