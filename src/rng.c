@@ -40,21 +40,19 @@ static int random_lua( lua_State *L )
     size_t len = lauxh_optinteger( L, 2, MBEDTLS_CTR_DRBG_MAX_REQUEST );
     unsigned char output[MBEDTLS_CTR_DRBG_MAX_REQUEST] = {0};
     int rc = mbedtls_ctr_drbg_random( &rng->drbg, output, len );
+    lmbedtls_errbuf_t errstr;
 
-    // got error
-    if( rc != 0 ){
-        lmbedtls_errbuf_t errstr;
-
-        lmbedtls_strerror( rc, errstr );
-        lua_pushnil( L );
-        lua_pushstring( L, errstr );
-
-        return 2;
+    if( rc == 0 ){
+        lua_pushlstring( L, (const char*)output, len );
+        return 1;
     }
 
-    lua_pushlstring( L, (const char*)output, len );
-    
-    return 1;
+    // got error
+    lmbedtls_strerror( rc, errstr );
+    lua_pushnil( L );
+    lua_pushstring( L, errstr );
+
+    return 2;
 }
 
 
@@ -77,21 +75,19 @@ static int reseed_lua( lua_State *L )
     const char *seed = lauxh_checklstring( L, 2, &len );
     int rc = mbedtls_ctr_drbg_reseed( &rng->drbg, (const unsigned char*)seed,
                                       len );
+    lmbedtls_errbuf_t errstr;
 
-    // got error
-    if( rc != 0 ){
-        lmbedtls_errbuf_t errstr;
-
-        lmbedtls_strerror( rc, errstr );
-        lua_pushboolean( L, 0 );
-        lua_pushstring( L, errstr );
-
-        return 2;
+    if( rc == 0 ){
+        lua_pushboolean( L, 1 );
+        return 1;
     }
 
-    lua_pushboolean( L, 1 );
+    // got error
+    lmbedtls_strerror( rc, errstr );
+    lua_pushboolean( L, 0 );
+    lua_pushstring( L, errstr );
 
-    return 1;
+    return 2;
 }
 
 
@@ -151,6 +147,7 @@ static int new_lua( lua_State *L )
     const char *seed = lauxh_optlstring( L, 1, NULL, &len );
     lmbedtls_rng_t *rng = lua_newuserdata( L, sizeof( lmbedtls_rng_t ) );
     int rc = 0;
+    lmbedtls_errbuf_t errstr;
 
     if( !rng ){
         lua_pushnil( L );
@@ -163,21 +160,19 @@ static int new_lua( lua_State *L )
     rc = mbedtls_ctr_drbg_seed( &rng->drbg, mbedtls_entropy_func, &rng->entropy,
                                (const unsigned char*)seed, len );
 
-    if( rc != 0 ){
-        lmbedtls_errbuf_t errstr;
-
-        mbedtls_ctr_drbg_free( &rng->drbg );
-        mbedtls_entropy_free( &rng->entropy );
-        lmbedtls_strerror( rc, errstr );
-        lua_pushnil( L );
-        lua_pushstring( L, errstr );
-
-        return 2;
+    if( rc == 0 ){
+        lauxh_setmetatable( L, LMBEDTLS_RNG_MT );
+        return 1;
     }
 
-    lauxh_setmetatable( L, LMBEDTLS_RNG_MT );
+    // got error
+    mbedtls_ctr_drbg_free( &rng->drbg );
+    mbedtls_entropy_free( &rng->entropy );
+    lmbedtls_strerror( rc, errstr );
+    lua_pushnil( L );
+    lua_pushstring( L, errstr );
 
-    return 1;
+    return 2;
 }
 
 
