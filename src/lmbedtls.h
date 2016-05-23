@@ -46,6 +46,7 @@
 #include "mbedtls/ripemd160.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
+#include "mbedtls/cipher.h"
 
 
 // memory alloc/dealloc
@@ -101,11 +102,13 @@ static inline void lmbedtls_strerror( int rc, lmbedtls_errbuf_t errbuf )
 
 // define module names
 #define LMBEDTLS_RNG_MT     "mbedtls.rng"
+#define LMBEDTLS_CIPHER_MT  "mbedtls.cipher"
 
 
 // define prototypes
 LUALIB_API int luaopen_mbedtls_hash( lua_State *L );
 LUALIB_API int luaopen_mbedtls_rng( lua_State *L );
+LUALIB_API int luaopen_mbedtls_cipher( lua_State *L );
 
 
 
