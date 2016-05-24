@@ -4,3 +4,6 @@
 [submodule "deps/lauxhlib"]
 	path = deps/lauxhlib
 	url = https://github.com/mah0x211/lauxhlib.git
+[submodule "deps/hexcodec"]
+	path = deps/hexcodec
+	url = https://github.com/mah0x211/hexcodec.git
