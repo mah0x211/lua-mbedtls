@@ -126,6 +126,17 @@ LUALIB_API int luaopen_mbedtls_hash( lua_State *L )
         ptr++;
     }
 
+    // add mbedtls_md_type_t
+    lauxh_pushint2tbl( L, "MD2", MBEDTLS_MD_MD2 );
+    lauxh_pushint2tbl( L, "MD4", MBEDTLS_MD_MD4 );
+    lauxh_pushint2tbl( L, "MD5", MBEDTLS_MD_MD5 );
+    lauxh_pushint2tbl( L, "SHA1", MBEDTLS_MD_SHA1 );
+    lauxh_pushint2tbl( L, "SHA224", MBEDTLS_MD_SHA224 );
+    lauxh_pushint2tbl( L, "SHA256", MBEDTLS_MD_SHA256 );
+    lauxh_pushint2tbl( L, "SHA384", MBEDTLS_MD_SHA384 );
+    lauxh_pushint2tbl( L, "SHA512", MBEDTLS_MD_SHA512 );
+    lauxh_pushint2tbl( L, "RIPEMD160", MBEDTLS_MD_RIPEMD160 );
+
     return 1;
 }
 
