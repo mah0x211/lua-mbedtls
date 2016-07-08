@@ -99,6 +99,29 @@ static inline void lmbedtls_strerror( int rc, lmbedtls_errbuf_t errbuf )
     mbedtls_strerror( rc, errbuf, BUFSIZ );
 }
 
+static inline void lmbedtls_newmetatable( lua_State *L, const char *tname,
+                                          struct luaL_Reg mm[], luaL_Reg m[] )
+{
+    struct luaL_Reg *ptr = mm;
+
+    // register metatable
+    luaL_newmetatable( L, tname );
+    while( ptr->name ){
+        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    }
+    // push methods into __index table
+    lua_pushstring( L, "__index" );
+    lua_newtable( L );
+    ptr = m;
+    while( ptr->name ){
+        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    }
+    lua_rawset( L, -3 );
+    lua_pop( L, 1 );
+}
+
 
 // define module names
 #define LMBEDTLS_RNG_MT     "mbedtls.rng"

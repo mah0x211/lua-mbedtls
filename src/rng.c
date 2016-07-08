@@ -195,24 +195,9 @@ LUALIB_API int luaopen_mbedtls_rng( lua_State *L )
         //{ "updateseedfile", updateseedfile_lua },
         { NULL, NULL }
     };
-    struct luaL_Reg *ptr = mmethod;
 
     // register metatable
-    luaL_newmetatable( L, LMBEDTLS_RNG_MT );
-    while( ptr->name ){
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    }
-    // create table
-    lua_pushstring( L, "__index" );
-    lua_newtable( L );
-    ptr = method;
-    while( ptr->name ){
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    }
-    lua_rawset( L, -3 );
-    lua_pop( L, 1 );
+    lmbedtls_newmetatable( L, LMBEDTLS_RNG_MT, mmethod, method );
 
     // create table
     lua_newtable( L );
