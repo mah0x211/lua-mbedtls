@@ -289,14 +289,13 @@ LUALIB_API int luaopen_mbedtls_hash( lua_State *L )
         { "new", new_lua },
         { NULL, NULL }
     };
-    struct luaL_Reg *ptr = mmethod;
+    struct luaL_Reg *ptr = funcs;
 
     // register metatable
     lmbedtls_newmetatable( L, LMBEDTLS_HASH_MT, mmethod, method );
 
     // create table
     lua_newtable( L );
-    ptr = funcs;
     while( ptr->name ){
         lauxh_pushfn2tbl( L, ptr->name, ptr->func );
         ptr++;
