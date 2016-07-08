@@ -28,26 +28,19 @@
 #include "lmbedtls.h"
 
 
-#define digest2hex_lua( L, digest, len ) do{ \
-    unsigned char hex[len * 2] = { 0 }; \
-    hex_encode( hex, (digest), len ); \
-    lua_pushlstring( (L), (const char*)hex, sizeof( hex ) ); \
-}while(0)
-
-
 static int finish_lua( lua_State *L )
 {
     mbedtls_md_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
     unsigned char output[64] = { 0 };
-    unsigned char *ptr = output;
+    const char *ptr = (const char*)output;
     int rc = 0;
 
     if( ctx->hmac_ctx ){
-        rc = mbedtls_md_hmac_finish( ctx, ptr );
+        rc = mbedtls_md_hmac_finish( ctx, output );
         mbedtls_md_hmac_reset( ctx );
     }
     else {
-        rc = mbedtls_md_finish( ctx, ptr );
+        rc = mbedtls_md_finish( ctx, output );
         mbedtls_md_starts( ctx );
     }
 
@@ -64,31 +57,31 @@ static int finish_lua( lua_State *L )
         case MBEDTLS_MD_MD2:
         case MBEDTLS_MD_MD4:
         case MBEDTLS_MD_MD5:
-            digest2hex_lua( L, ptr, 16 );
+            lua_pushlstring( L, ptr, 16 );
             return 1;
 
         case MBEDTLS_MD_SHA1:
-            digest2hex_lua( L, ptr, 20 );
+            lua_pushlstring( L, ptr, 20 );
             return 1;
 
         case MBEDTLS_MD_SHA224:
-            digest2hex_lua( L, ptr, 28 );
+            lua_pushlstring( L, ptr, 28 );
             return 1;
 
         case MBEDTLS_MD_SHA256:
-            digest2hex_lua( L, ptr, 32 );
+            lua_pushlstring( L, ptr, 32 );
             return 1;
 
         case MBEDTLS_MD_SHA384:
-            digest2hex_lua( L, ptr, 48 );
+            lua_pushlstring( L, ptr, 48 );
             return 1;
 
         case MBEDTLS_MD_SHA512:
-            digest2hex_lua( L, ptr, 64 );
+            lua_pushlstring( L, ptr, 64 );
             return 1;
 
         case MBEDTLS_MD_RIPEMD160:
-            digest2hex_lua( L, ptr, 20 );
+            lua_pushlstring( L, ptr, 20 );
             return 1;
 
         default:
@@ -195,7 +188,7 @@ static int new_lua( lua_State *L )
     /* check arguments */ \
     if( lua_isnoneornil( (L), 2 ) ){ \
         hash_api( (const unsigned char*)input, ilen, (digest), ##__VA_ARGS__ ); \
-        digest2hex_lua( (L), (digest), (dlen) ); \
+        lua_pushlstring( (L), (const char*)(digest), (dlen) ); \
         return 1; \
     } \
     else { \
@@ -204,7 +197,7 @@ static int new_lua( lua_State *L )
         const mbedtls_md_info_t *info = mbedtls_md_info_from_type( hash_type ); \
         if( mbedtls_md_hmac( info, key, klen, (const unsigned char*)input, \
                              ilen, (digest) ) == 0 ){ \
-            digest2hex_lua( (L), (digest), (dlen) ); \
+            lua_pushlstring( (L), (const char*)(digest), (dlen) ); \
             return 1; \
         } \
     } \
