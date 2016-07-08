@@ -184,6 +184,7 @@ static int new_lua( lua_State *L )
     if( rc ){
         lmbedtls_errbuf_t errbuf;
 
+        mbedtls_md_free( &md->ctx );
         lmbedtls_strerror( rc, errbuf );
         lua_pushnil( L );
         lua_pushstring( L, errbuf );
