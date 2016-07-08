@@ -124,6 +124,7 @@ static inline void lmbedtls_newmetatable( lua_State *L, const char *tname,
 
 
 // define module names
+#define LMBEDTLS_HASH_MT    "mbedtls.hash"
 #define LMBEDTLS_RNG_MT     "mbedtls.rng"
 #define LMBEDTLS_CIPHER_MT  "mbedtls.cipher"
 

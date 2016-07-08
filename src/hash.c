@@ -30,9 +30,170 @@
 
 #define digest2hex_lua( L, digest, len ) do{ \
     unsigned char hex[len * 2] = { 0 }; \
-    hex_encode( hex, (digest), sizeof( (digest) ) ); \
+    hex_encode( hex, (digest), len ); \
     lua_pushlstring( (L), (const char*)hex, sizeof( hex ) ); \
 }while(0)
+
+
+typedef struct {
+    mbedtls_md_context_t ctx;
+    mbedtls_md_type_t type;
+} lmbedtls_md_t;
+
+
+static int finish_lua( lua_State *L )
+{
+    lmbedtls_md_t *md = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
+    unsigned char output[64] = { 0 };
+    unsigned char *ptr = output;
+    int rc = 0;
+
+    if( md->ctx.hmac_ctx ){
+        rc = mbedtls_md_hmac_finish( &md->ctx, ptr );
+        mbedtls_md_hmac_reset( &md->ctx );
+    }
+    else {
+        rc = mbedtls_md_finish( &md->ctx, ptr );
+        mbedtls_md_starts( &md->ctx );
+    }
+
+    if( rc ){
+        lmbedtls_errbuf_t errbuf;
+
+        lmbedtls_strerror( rc, errbuf );
+        lua_pushnil( L );
+        lua_pushstring( L, errbuf );
+        return 2;
+    }
+
+    switch( md->type ){
+        case MBEDTLS_MD_MD2:
+        case MBEDTLS_MD_MD4:
+        case MBEDTLS_MD_MD5:
+            digest2hex_lua( L, ptr, 16 );
+            return 1;
+
+        case MBEDTLS_MD_SHA1:
+            digest2hex_lua( L, ptr, 20 );
+            return 1;
+
+        case MBEDTLS_MD_SHA224:
+            digest2hex_lua( L, ptr, 28 );
+            return 1;
+
+        case MBEDTLS_MD_SHA256:
+            digest2hex_lua( L, ptr, 32 );
+            return 1;
+
+        case MBEDTLS_MD_SHA384:
+            digest2hex_lua( L, ptr, 48 );
+            return 1;
+
+        case MBEDTLS_MD_SHA512:
+            digest2hex_lua( L, ptr, 64 );
+            return 1;
+
+        case MBEDTLS_MD_RIPEMD160:
+            digest2hex_lua( L, ptr, 20 );
+            return 1;
+
+        default:
+            return luaL_error( L, "%s - unknown md type configured",
+                               strerror( EINVAL ) );
+    }
+}
+
+
+static int update_lua( lua_State *L )
+{
+    lmbedtls_md_t *md = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
+    size_t len = 0;
+    const char *key = lauxh_checklstring( L, 2, &len );
+    int rc = 0;
+
+    if( md->ctx.hmac_ctx ){
+        rc = mbedtls_md_hmac_update( &md->ctx, (const unsigned char*)key, len );
+    }
+    else {
+        rc = mbedtls_md_update( &md->ctx, (const unsigned char*)key, len );
+    }
+
+    if( rc ){
+        lmbedtls_errbuf_t errbuf;
+
+        lmbedtls_strerror( rc, errbuf );
+        lua_pushboolean( L, 0 );
+        lua_pushstring( L, errbuf );
+        return 2;
+    }
+
+    lua_pushboolean( L, 1 );
+
+    return 1;
+}
+
+
+static int tostring_lua( lua_State *L )
+{
+    return TOSTRING_MT( L, LMBEDTLS_HASH_MT );
+}
+
+
+static int gc_lua( lua_State *L )
+{
+    lmbedtls_md_t *md = lua_touserdata( L, 1 );
+
+    mbedtls_md_free( &md->ctx );
+
+    return 0;
+}
+
+
+static int new_lua( lua_State *L )
+{
+    const mbedtls_md_type_t type = lauxh_checkinteger( L, 1 );
+    size_t len = 0;
+    const char *key = lauxh_optlstring( L, 2, NULL, &len );
+    const mbedtls_md_info_t *info = mbedtls_md_info_from_type( type );
+    lmbedtls_md_t *md = NULL;
+    int rc = 0;
+
+    // unknown type
+    if( !info ){
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( EINVAL ) );
+        return 2;
+    }
+    // alloc error
+    else if( !( md = lua_newuserdata( L, sizeof( lmbedtls_md_t ) ) ) ){
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( errno ) ) ;
+        return 2;
+    }
+
+    mbedtls_md_init( &md->ctx );
+    md->type = type;
+
+    rc = mbedtls_md_setup( &md->ctx, info, len );
+    if( !rc ){
+        rc = ( len ) ?
+             mbedtls_md_hmac_starts( &md->ctx, (const unsigned char*)key, len ) :
+             mbedtls_md_starts( &md->ctx );
+    }
+    // got error
+    if( rc ){
+        lmbedtls_errbuf_t errbuf;
+
+        lmbedtls_strerror( rc, errbuf );
+        lua_pushnil( L );
+        lua_pushstring( L, errbuf );
+        return 2;
+    }
+
+    lauxh_setmetatable( L, LMBEDTLS_HASH_MT );
+
+    return 1;
+}
 
 
 #define hash_lua( L, hash_type, hash_api, digest, dlen, ... ) do{ \
@@ -107,6 +268,16 @@ static int md5_lua( lua_State *L )
 
 LUALIB_API int luaopen_mbedtls_hash( lua_State *L )
 {
+    struct luaL_Reg mmethod[] = {
+        { "__gc", gc_lua },
+        { "__tostring", tostring_lua },
+        { NULL, NULL }
+    };
+    struct luaL_Reg method[] = {
+        { "update", update_lua },
+        { "finish", finish_lua },
+        { NULL, NULL }
+    };
     struct luaL_Reg funcs[] = {
         { "md5", md5_lua },
         { "sha1", sha1_lua },
@@ -114,13 +285,18 @@ LUALIB_API int luaopen_mbedtls_hash( lua_State *L )
         { "sha256", sha256_lua },
         { "sha384", sha384_lua },
         { "sha512", sha512_lua },
-        { "ripemd160", ripemd160_lua},
+        { "ripemd160", ripemd160_lua },
+        { "new", new_lua },
         { NULL, NULL }
     };
-    struct luaL_Reg *ptr = funcs;
+    struct luaL_Reg *ptr = mmethod;
+
+    // register metatable
+    lmbedtls_newmetatable( L, LMBEDTLS_HASH_MT, mmethod, method );
 
     // create table
     lua_newtable( L );
+    ptr = funcs;
     while( ptr->name ){
         lauxh_pushfn2tbl( L, ptr->name, ptr->func );
         ptr++;
