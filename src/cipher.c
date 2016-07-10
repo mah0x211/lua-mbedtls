@@ -32,10 +32,10 @@ static int checktag_lua( lua_State *L )
 {
     lmbedtls_errbuf_t errbuf;
 #if defined(MBEDTLS_GCM_C)
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     const char *tag = lauxh_checklstring( L, 2, &len );
-    int rc = mbedtls_cipher_check_tag( ctx, (unsigned char*)tag, len );
+    int rc = mbedtls_cipher_check_tag( cph, (unsigned char*)tag, len );
 
     if( rc == 0 ){
         lua_pushboolean( L, 1 );
@@ -60,10 +60,10 @@ static int writetag_lua( lua_State *L )
 {
     lmbedtls_errbuf_t errbuf;
 #if defined(MBEDTLS_GCM_C)
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     const char *tag = lauxh_checklstring( L, 2, &len );
-    int rc = mbedtls_cipher_write_tag( ctx, (unsigned char*)tag, len );
+    int rc = mbedtls_cipher_write_tag( cph, (unsigned char*)tag, len );
 
     if( rc == 0 ){
         lua_pushboolean( L, 1 );
@@ -86,10 +86,10 @@ static int writetag_lua( lua_State *L )
 
 static int finish_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     unsigned char output[BUFSIZ] = {0};
-    int rc = mbedtls_cipher_finish( ctx, output, &len );
+    int rc = mbedtls_cipher_finish( cph, output, &len );
     lmbedtls_errbuf_t errbuf;
 
     if( rc == 0 ){
@@ -108,11 +108,11 @@ static int finish_lua( lua_State *L )
 
 static int update_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     const char *data = lauxh_checklstring( L, 2, &len );
     const unsigned char *ptr = (const unsigned char*)data;
-    size_t blksize = mbedtls_cipher_get_block_size( ctx );
+    size_t blksize = mbedtls_cipher_get_block_size( cph );
     size_t tail = len % blksize;
     size_t last = len - tail;
     size_t offset = 0;
@@ -124,7 +124,7 @@ static int update_lua( lua_State *L )
     lua_settop( L, 0 );
     for(; offset < last; offset += blksize )
     {
-        rc = mbedtls_cipher_update( ctx, ptr + offset, blksize, output, &olen );
+        rc = mbedtls_cipher_update( cph, ptr + offset, blksize, output, &olen );
         if( rc != 0 ){
             goto FAILED;
         }
@@ -133,7 +133,7 @@ static int update_lua( lua_State *L )
 
     if( tail )
     {
-        rc = mbedtls_cipher_update( ctx, ptr + offset, tail, output, &olen );
+        rc = mbedtls_cipher_update( cph, ptr + offset, tail, output, &olen );
         if( rc == 0 ){
             lua_pushlstring( L, (const char*)output, olen );
         }
@@ -159,10 +159,10 @@ static int updatead_lua( lua_State *L )
 {
     lmbedtls_errbuf_t errbuf;
 #if defined(MBEDTLS_GCM_C)
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     const char *data = lauxh_checklstring( L, 2, &len );
-    int rc = mbedtls_cipher_update_ad( ctx, (const unsigned char*)data, len );
+    int rc = mbedtls_cipher_update_ad( cph, (const unsigned char*)data, len );
 
     if( rc == 0 ){
         lua_pushboolean( L, 1 );
@@ -185,8 +185,8 @@ static int updatead_lua( lua_State *L )
 
 static int reset_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
-    int rc = mbedtls_cipher_reset( ctx );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    int rc = mbedtls_cipher_reset( cph );
     lmbedtls_errbuf_t errbuf;
 
     if( rc == 0 ){
@@ -205,10 +205,10 @@ static int reset_lua( lua_State *L )
 
 static int setiv_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     const char *iv = lauxh_checklstring( L, 2, &len );
-    int rc = mbedtls_cipher_set_iv( ctx, (const unsigned char*)iv, len );
+    int rc = mbedtls_cipher_set_iv( cph, (const unsigned char*)iv, len );
     lmbedtls_errbuf_t errbuf;
 
     if( rc == 0 ){
@@ -229,9 +229,9 @@ static int setpaddingmode_lua( lua_State *L )
 {
     lmbedtls_errbuf_t errbuf;
 #if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     mbedtls_cipher_padding_t pad = lauxh_checkinteger( L, 2 );
-    int rc = mbedtls_cipher_set_padding_mode( ctx, pad );
+    int rc = mbedtls_cipher_set_padding_mode( cph, pad );
 
     if( rc == 0 ){
         lua_pushboolean( L, 1 );
@@ -254,11 +254,11 @@ static int setpaddingmode_lua( lua_State *L )
 
 static int setkey_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     size_t len = 0;
     const char *key = lauxh_checklstring( L, 2, &len );
     const mbedtls_operation_t op = lauxh_checkinteger( L, 3 );
-    int rc = mbedtls_cipher_setkey( ctx, (const unsigned char*)key,
+    int rc = mbedtls_cipher_setkey( cph, (const unsigned char*)key,
                                    (int)len * CHAR_BIT, op );
     lmbedtls_errbuf_t errbuf;
 
@@ -278,9 +278,9 @@ static int setkey_lua( lua_State *L )
 
 static int getoperation_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
 
-    lua_pushinteger( L, mbedtls_cipher_get_operation( ctx ) );
+    lua_pushinteger( L, mbedtls_cipher_get_operation( cph ) );
 
     return 1;
 }
@@ -288,9 +288,9 @@ static int getoperation_lua( lua_State *L )
 
 static int getkeybitlen_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
 
-    lua_pushinteger( L, mbedtls_cipher_get_key_bitlen( ctx ) );
+    lua_pushinteger( L, mbedtls_cipher_get_key_bitlen( cph ) );
 
     return 1;
 }
@@ -298,8 +298,8 @@ static int getkeybitlen_lua( lua_State *L )
 
 static int getname_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
-    const char *name = mbedtls_cipher_get_name( ctx );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    const char *name = mbedtls_cipher_get_name( cph );
 
     if( name ){
         lua_pushstring( L, name );
@@ -314,9 +314,9 @@ static int getname_lua( lua_State *L )
 
 static int gettype_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
 
-    lua_pushinteger( L, mbedtls_cipher_get_type( ctx ) );
+    lua_pushinteger( L, mbedtls_cipher_get_type( cph ) );
 
     return 1;
 }
@@ -324,9 +324,9 @@ static int gettype_lua( lua_State *L )
 
 static int getivsize_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
 
-    lua_pushinteger( L, mbedtls_cipher_get_iv_size( ctx ) );
+    lua_pushinteger( L, mbedtls_cipher_get_iv_size( cph ) );
 
     return 1;
 }
@@ -334,9 +334,9 @@ static int getivsize_lua( lua_State *L )
 
 static int getciphermode_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
 
-    lua_pushinteger( L, mbedtls_cipher_get_cipher_mode( ctx ) );
+    lua_pushinteger( L, mbedtls_cipher_get_cipher_mode( cph ) );
 
     return 1;
 }
@@ -344,9 +344,9 @@ static int getciphermode_lua( lua_State *L )
 
 static int getblocksize_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
 
-    lua_pushinteger( L, mbedtls_cipher_get_block_size( ctx ) );
+    lua_pushinteger( L, mbedtls_cipher_get_block_size( cph ) );
 
     return 1;
 }
@@ -354,7 +354,7 @@ static int getblocksize_lua( lua_State *L )
 
 static int init_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
+    mbedtls_cipher_context_t *cph = lauxh_checkudata( L, 1, LMBEDTLS_CIPHER_MT );
     const mbedtls_cipher_type_t type = lauxh_optinteger( L, 2, MBEDTLS_CIPHER_NONE );
     const mbedtls_cipher_info_t *info = NULL;
     int rc = 0;
@@ -362,7 +362,7 @@ static int init_lua( lua_State *L )
 
     // use current cipher info
     if( type == MBEDTLS_CIPHER_NONE ){
-        info = ctx->cipher_info;
+        info = cph->cipher_info;
     }
     // check argument
     else if( !( info = mbedtls_cipher_info_from_type( type ) ) ){
@@ -371,8 +371,8 @@ static int init_lua( lua_State *L )
         return 2;
     }
 
-    mbedtls_cipher_free( ctx );
-    rc = mbedtls_cipher_setup( ctx, info );
+    mbedtls_cipher_free( cph );
+    rc = mbedtls_cipher_setup( cph, info );
     if( rc == 0 ){
         lua_pushboolean( L, 1 );
         return 1;
@@ -395,9 +395,9 @@ static int tostring_lua( lua_State *L )
 
 static int gc_lua( lua_State *L )
 {
-    mbedtls_cipher_context_t *ctx = lua_touserdata( L, 1 );
+    mbedtls_cipher_context_t *cph = lua_touserdata( L, 1 );
 
-    mbedtls_cipher_free( ctx );
+    mbedtls_cipher_free( cph );
 
     return 0;
 }
@@ -407,7 +407,7 @@ static int new_lua( lua_State *L )
 {
     const mbedtls_cipher_type_t type = lauxh_checkinteger( L, 1 );
     const mbedtls_cipher_info_t *info = mbedtls_cipher_info_from_type( type );
-    mbedtls_cipher_context_t *ctx = NULL;
+    mbedtls_cipher_context_t *cph = NULL;
     int rc = 0;
 
     if( !info ){
@@ -416,15 +416,15 @@ static int new_lua( lua_State *L )
         return 2;
     }
 
-    ctx = lua_newuserdata( L, sizeof( mbedtls_cipher_context_t ) );
-    if( !ctx ){
+    cph = lua_newuserdata( L, sizeof( mbedtls_cipher_context_t ) );
+    if( !cph ){
         lua_pushnil( L );
         lua_pushstring( L, strerror( errno ) );
         return 2;
     }
 
-    mbedtls_cipher_init( ctx );
-    if( ( rc = mbedtls_cipher_setup( ctx, info ) ) != 0 ){
+    mbedtls_cipher_init( cph );
+    if( ( rc = mbedtls_cipher_setup( cph, info ) ) != 0 ){
         lmbedtls_errbuf_t errstr;
 
         lmbedtls_strerror( rc, errstr );

@@ -30,18 +30,18 @@
 
 static int finish_lua( lua_State *L )
 {
-    mbedtls_md_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
+    mbedtls_md_context_t *md = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
     unsigned char output[64] = { 0 };
     const char *ptr = (const char*)output;
     int rc = 0;
 
-    if( ctx->hmac_ctx ){
-        rc = mbedtls_md_hmac_finish( ctx, output );
-        mbedtls_md_hmac_reset( ctx );
+    if( md->hmac_ctx ){
+        rc = mbedtls_md_hmac_finish( md, output );
+        mbedtls_md_hmac_reset( md );
     }
     else {
-        rc = mbedtls_md_finish( ctx, output );
-        mbedtls_md_starts( ctx );
+        rc = mbedtls_md_finish( md, output );
+        mbedtls_md_starts( md );
     }
 
     if( rc ){
@@ -53,7 +53,7 @@ static int finish_lua( lua_State *L )
         return 2;
     }
 
-    switch( mbedtls_md_get_type( ctx->md_info ) ){
+    switch( mbedtls_md_get_type( md->md_info ) ){
         case MBEDTLS_MD_MD2:
         case MBEDTLS_MD_MD4:
         case MBEDTLS_MD_MD5:
@@ -93,16 +93,16 @@ static int finish_lua( lua_State *L )
 
 static int update_lua( lua_State *L )
 {
-    mbedtls_md_context_t *ctx = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
+    mbedtls_md_context_t *md = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
     size_t len = 0;
     const char *key = lauxh_checklstring( L, 2, &len );
     int rc = 0;
 
-    if( ctx->hmac_ctx ){
-        rc = mbedtls_md_hmac_update( ctx, (const unsigned char*)key, len );
+    if( md->hmac_ctx ){
+        rc = mbedtls_md_hmac_update( md, (const unsigned char*)key, len );
     }
     else {
-        rc = mbedtls_md_update( ctx, (const unsigned char*)key, len );
+        rc = mbedtls_md_update( md, (const unsigned char*)key, len );
     }
 
     if( rc ){
@@ -128,9 +128,9 @@ static int tostring_lua( lua_State *L )
 
 static int gc_lua( lua_State *L )
 {
-    mbedtls_md_context_t *ctx = lua_touserdata( L, 1 );
+    mbedtls_md_context_t *md = lua_touserdata( L, 1 );
 
-    mbedtls_md_free( ctx );
+    mbedtls_md_free( md );
 
     return 0;
 }
@@ -142,7 +142,7 @@ static int new_lua( lua_State *L )
     size_t len = 0;
     const char *key = lauxh_optlstring( L, 2, NULL, &len );
     const mbedtls_md_info_t *info = mbedtls_md_info_from_type( type );
-    mbedtls_md_context_t *ctx = NULL;
+    mbedtls_md_context_t *md = NULL;
     int rc = 0;
 
     // unknown type
@@ -152,24 +152,24 @@ static int new_lua( lua_State *L )
         return 2;
     }
     // alloc error
-    else if( !( ctx = lua_newuserdata( L, sizeof( mbedtls_md_context_t ) ) ) ){
+    else if( !( md = lua_newuserdata( L, sizeof( mbedtls_md_context_t ) ) ) ){
         lua_pushnil( L );
         lua_pushstring( L, strerror( errno ) ) ;
         return 2;
     }
 
-    mbedtls_md_init( ctx );
-    rc = mbedtls_md_setup( ctx, info, len );
+    mbedtls_md_init( md );
+    rc = mbedtls_md_setup( md, info, len );
     if( !rc ){
         rc = ( len ) ?
-             mbedtls_md_hmac_starts( ctx, (const unsigned char*)key, len ) :
-             mbedtls_md_starts( ctx );
+             mbedtls_md_hmac_starts( md, (const unsigned char*)key, len ) :
+             mbedtls_md_starts( md );
     }
     // got error
     if( rc ){
         lmbedtls_errbuf_t errbuf;
 
-        mbedtls_md_free( ctx );
+        mbedtls_md_free( md );
         lmbedtls_strerror( rc, errbuf );
         lua_pushnil( L );
         lua_pushstring( L, errbuf );
