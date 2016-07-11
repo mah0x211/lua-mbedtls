@@ -47,6 +47,7 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/cipher.h"
+#include "mbedtls/pk.h"
 
 
 // memory alloc/dealloc
@@ -127,13 +128,22 @@ static inline void lmbedtls_newmetatable( lua_State *L, const char *tname,
 #define LMBEDTLS_HASH_MT    "mbedtls.hash"
 #define LMBEDTLS_RNG_MT     "mbedtls.rng"
 #define LMBEDTLS_CIPHER_MT  "mbedtls.cipher"
+#define LMBEDTLS_PK_MT      "mbedtls.pk"
+
+
+// define data types
+
+typedef struct {
+    mbedtls_ctr_drbg_context drbg;
+    mbedtls_entropy_context entropy;
+} lmbedtls_rng_t;
 
 
 // define prototypes
 LUALIB_API int luaopen_mbedtls_hash( lua_State *L );
 LUALIB_API int luaopen_mbedtls_rng( lua_State *L );
 LUALIB_API int luaopen_mbedtls_cipher( lua_State *L );
-
+LUALIB_API int luaopen_mbedtls_pk( lua_State *L );
 
 
 #endif

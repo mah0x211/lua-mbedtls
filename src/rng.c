@@ -28,12 +28,6 @@
 #include "lmbedtls.h"
 
 
-typedef struct {
-    mbedtls_ctr_drbg_context drbg;
-    mbedtls_entropy_context entropy;
-} lmbedtls_rng_t;
-
-
 static int random_lua( lua_State *L )
 {
     lmbedtls_rng_t *rng = lauxh_checkudata( L, 1, LMBEDTLS_RNG_MT );
