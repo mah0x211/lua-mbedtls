@@ -50,41 +50,6 @@
 #include "mbedtls/pk.h"
 
 
-// memory alloc/dealloc
-#define palloc(t)       (t*)malloc( sizeof(t) )
-#define pnalloc(n,t)    (t*)malloc( (n) * sizeof(t) )
-#define pcalloc(t)      (t*)calloc( 1, sizeof(t) )
-#define pcnalloc(n,t)   (t*)calloc( n, sizeof(t) )
-#define prealloc(n,t,p) (t*)realloc( p, (n) * sizeof(t) )
-#define pdealloc(p)     free((void*)p)
-
-
-// print message to stdout
-#define plog(fmt,...) \
-    printf( fmt "\n", ##__VA_ARGS__ )
-
-#define pflog(f,fmt,...) \
-    printf( #f "(): " fmt "\n", ##__VA_ARGS__ )
-
-// print message to stderr
-#define pelog(fmt,...) \
-    fprintf( stderr, fmt "\n", ##__VA_ARGS__ )
-
-#define pfelog(f,fmt,...) \
-    fprintf( stderr, #f "(): " fmt "\n", ##__VA_ARGS__ )
-
-// print message to stderr with strerror
-#define pelogerr(fmt,...) \
-    fprintf( stderr, fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
-
-#define pfelogerr(f,fmt,...) \
-    fprintf( stderr, #f "(): " fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
-
-
-// helper macros
-#define MSTRCAT(_msg)  #_msg
-
-
 #define TOSTRING_MT(L,tname) ({ \
     lua_pushfstring( L, tname ": %p", lua_touserdata( L, 1 ) ); \
     1; \
