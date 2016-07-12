@@ -1,5 +1,5 @@
 local hexencode = require('hex').encode;
-local hash = require('mbedtls.hash');
+local md = require('mbedtls.md');
 local FEATURE = {
     {
         alg = 'md5',
@@ -56,11 +56,11 @@ local key = 'hmac';
 local h, err;
 
 for _, feature in ipairs( FEATURE ) do
-    ifNotEqual( feature.cmp[1], hexencode( hash[feature.alg]( src ) ) );
-    ifNotEqual( feature.cmp[2], hexencode( hash[feature.alg]( src, key ) ) );
+    ifNotEqual( feature.cmp[1], hexencode( md[feature.alg]( src ) ) );
+    ifNotEqual( feature.cmp[2], hexencode( md[feature.alg]( src, key ) ) );
 
     -- hash
-    h = ifNil( hash.new( hash[feature.alg:upper()] ) );
+    h = ifNil( md.new( md[feature.alg:upper()] ) );
     ifNotTrue( h:update( src ) );
     ifNotEqual( feature.cmp[1], hexencode( h:finish() ) );
     -- reuse
@@ -68,7 +68,7 @@ for _, feature in ipairs( FEATURE ) do
     ifNotEqual( feature.cmp[1], hexencode( h:finish() ) );
 
     -- hmac-hash
-    h = ifNil( hash.new( hash[feature.alg:upper()], key ) );
+    h = ifNil( md.new( md[feature.alg:upper()], key ) );
     ifNotTrue( h:update( src ) );
     ifNotEqual( feature.cmp[2], hexencode( h:finish() ) );
     -- reuse
