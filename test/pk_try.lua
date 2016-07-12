@@ -4,6 +4,9 @@ local pk = require('mbedtls.pk')
 local rng = require('mbedtls.rng')
 local KEY = ifNil( rng.new( 'gen key' ) )
 local FEATURE = {
+    -- rsa
+    { alg = pk.RSA, name = 'RSA', bits = 256, key = KEY },
+    -- ec
     { alg = pk.EC, name = 'EC', bits = 256, key = KEY, gid = pk.BP256R1 },
     { alg = pk.EC, name = 'EC', bits = 384, key = KEY, gid = pk.BP384R1 },
     { alg = pk.EC, name = 'EC', bits = 512, key = KEY, gid = pk.BP512R1 },
@@ -16,7 +19,32 @@ local FEATURE = {
     { alg = pk.EC, name = 'EC', bits = 256, key = KEY, gid = pk.SECP256R1 },
     { alg = pk.EC, name = 'EC', bits = 384, key = KEY, gid = pk.SECP384R1 },
     { alg = pk.EC, name = 'EC', bits = 521, key = KEY, gid = pk.SECP521R1 },
-    { alg = pk.RSA, name = 'RSA', bits = 256, key = KEY },
+    -- ecdsa
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 256, key = KEY, gid = pk.BP256R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 384, key = KEY, gid = pk.BP384R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 512, key = KEY, gid = pk.BP512R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 255, key = KEY, gid = pk.CURVE25519 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 192, key = KEY, gid = pk.SECP192K1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 192, key = KEY, gid = pk.SECP192R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 224, key = KEY, gid = pk.SECP224K1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 224, key = KEY, gid = pk.SECP224R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 256, key = KEY, gid = pk.SECP256K1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 256, key = KEY, gid = pk.SECP256R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 384, key = KEY, gid = pk.SECP384R1 },
+    { alg = pk.ECDSA, name = 'ECDSA', bits = 521, key = KEY, gid = pk.SECP521R1 },
+    -- ec_dh
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 256, key = KEY, gid = pk.BP256R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 384, key = KEY, gid = pk.BP384R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 512, key = KEY, gid = pk.BP512R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 255, key = KEY, gid = pk.CURVE25519 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 192, key = KEY, gid = pk.SECP192K1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 192, key = KEY, gid = pk.SECP192R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 224, key = KEY, gid = pk.SECP224K1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 224, key = KEY, gid = pk.SECP224R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 256, key = KEY, gid = pk.SECP256K1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 256, key = KEY, gid = pk.SECP256R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 384, key = KEY, gid = pk.SECP384R1 },
+    { alg = pk.EC_DH, name = 'EC_DH', bits = 521, key = KEY, gid = pk.SECP521R1 },
 };
 
 
@@ -38,12 +66,15 @@ for _, feature in ipairs( FEATURE ) do
 
 
     -- genkey
-    if feature.alg == pk.RSA or feature.alg == pk.EC then
+    if feature.alg == pk.RSA or
+       feature.alg == pk.EC or
+       feature.alg == pk.ECDSA or
+       feature.alg == pk.EC_DH then
         -- genkey RSA
         if feature.alg == pk.RSA then
             ifNotTrue( p:genkey( feature.key, feature.bits ) );
         -- genkey EC
-        elseif feature.alg == pk.EC then
+        else
             ifNotTrue( p:genkey( feature.key, feature.gid ) );
         end
 
@@ -54,7 +85,7 @@ for _, feature in ipairs( FEATURE ) do
 
         -- writekey
         if feature.alg == pk.RSA or
-          feature.alg == pk.EC and feature.gid ~= pk.CURVE25519 then
+           feature.alg == pk.EC and feature.gid ~= pk.CURVE25519 then
             -- create der-encoded key
             write2file( './private.der', ifNil( p:writekeyder() ) );
             write2file( './public.der', ifNil( p:writepubkeyder() ) );
