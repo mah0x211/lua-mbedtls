@@ -19,7 +19,7 @@
  *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *  DEALINGS IN THE SOFTWARE.
  *
- *  src/hash.c
+ *  src/md.c
  *  lua-mbedtls
  *  Created by Masatoshi Teruya on 16/02/06.
  */
@@ -30,7 +30,7 @@
 
 static int finish_lua( lua_State *L )
 {
-    mbedtls_md_context_t *md = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
+    mbedtls_md_context_t *md = lauxh_checkudata( L, 1, LMBEDTLS_MD_MT );
     unsigned char output[64] = { 0 };
     const char *ptr = (const char*)output;
     int rc = 0;
@@ -93,7 +93,7 @@ static int finish_lua( lua_State *L )
 
 static int update_lua( lua_State *L )
 {
-    mbedtls_md_context_t *md = lauxh_checkudata( L, 1, LMBEDTLS_HASH_MT );
+    mbedtls_md_context_t *md = lauxh_checkudata( L, 1, LMBEDTLS_MD_MT );
     size_t len = 0;
     const char *key = lauxh_checklstring( L, 2, &len );
     int rc = 0;
@@ -122,7 +122,7 @@ static int update_lua( lua_State *L )
 
 static int tostring_lua( lua_State *L )
 {
-    return TOSTRING_MT( L, LMBEDTLS_HASH_MT );
+    return TOSTRING_MT( L, LMBEDTLS_MD_MT );
 }
 
 
@@ -176,7 +176,7 @@ static int new_lua( lua_State *L )
         return 2;
     }
 
-    lauxh_setmetatable( L, LMBEDTLS_HASH_MT );
+    lauxh_setmetatable( L, LMBEDTLS_MD_MT );
 
     return 1;
 }
@@ -252,7 +252,7 @@ static int md5_lua( lua_State *L )
 }
 
 
-LUALIB_API int luaopen_mbedtls_hash( lua_State *L )
+LUALIB_API int luaopen_mbedtls_md( lua_State *L )
 {
     struct luaL_Reg mmethod[] = {
         { "__gc", gc_lua },
@@ -278,7 +278,7 @@ LUALIB_API int luaopen_mbedtls_hash( lua_State *L )
     struct luaL_Reg *ptr = funcs;
 
     // register metatable
-    lmbedtls_newmetatable( L, LMBEDTLS_HASH_MT, mmethod, method );
+    lmbedtls_newmetatable( L, LMBEDTLS_MD_MT, mmethod, method );
 
     // create table
     lua_newtable( L );

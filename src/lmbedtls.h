@@ -90,7 +90,7 @@ static inline void lmbedtls_newmetatable( lua_State *L, const char *tname,
 
 
 // define module names
-#define LMBEDTLS_HASH_MT    "mbedtls.hash"
+#define LMBEDTLS_MD_MT      "mbedtls.md"
 #define LMBEDTLS_RNG_MT     "mbedtls.rng"
 #define LMBEDTLS_CIPHER_MT  "mbedtls.cipher"
 #define LMBEDTLS_PK_MT      "mbedtls.pk"
@@ -105,7 +105,7 @@ typedef struct {
 
 
 // define prototypes
-LUALIB_API int luaopen_mbedtls_hash( lua_State *L );
+LUALIB_API int luaopen_mbedtls_md( lua_State *L );
 LUALIB_API int luaopen_mbedtls_rng( lua_State *L );
 LUALIB_API int luaopen_mbedtls_cipher( lua_State *L );
 LUALIB_API int luaopen_mbedtls_pk( lua_State *L );
