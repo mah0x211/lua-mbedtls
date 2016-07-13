@@ -48,6 +48,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/cipher.h"
 #include "mbedtls/pk.h"
+#include "mbedtls/x509_crl.h"
 
 
 #define TOSTRING_MT(L,tname) ({ \
@@ -90,10 +91,11 @@ static inline void lmbedtls_newmetatable( lua_State *L, const char *tname,
 
 
 // define module names
-#define LMBEDTLS_MD_MT      "mbedtls.md"
-#define LMBEDTLS_RNG_MT     "mbedtls.rng"
-#define LMBEDTLS_CIPHER_MT  "mbedtls.cipher"
-#define LMBEDTLS_PK_MT      "mbedtls.pk"
+#define LMBEDTLS_MD_MT          "mbedtls.md"
+#define LMBEDTLS_RNG_MT         "mbedtls.rng"
+#define LMBEDTLS_CIPHER_MT      "mbedtls.cipher"
+#define LMBEDTLS_PK_MT          "mbedtls.pk"
+#define LMBEDTLS_X509_CRL_MT    "mbedtls.x509.crl"
 
 
 // define data types
@@ -109,6 +111,7 @@ LUALIB_API int luaopen_mbedtls_md( lua_State *L );
 LUALIB_API int luaopen_mbedtls_rng( lua_State *L );
 LUALIB_API int luaopen_mbedtls_cipher( lua_State *L );
 LUALIB_API int luaopen_mbedtls_pk( lua_State *L );
+LUALIB_API int luaopen_mbedtls_x509_crl( lua_State *L );
 
 
 #endif
