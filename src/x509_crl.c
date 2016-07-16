@@ -36,7 +36,7 @@ static int info_lua( lua_State *L )
     char buf[100000] = { 0 };
     int rc = mbedtls_x509_crl_info( buf, 100000, prefix, crl );
 
-    if( rc ){
+    if( rc < 0 ){
         lmbedtls_errbuf_t errbuf;
 
         lmbedtls_strerror( rc, errbuf );
