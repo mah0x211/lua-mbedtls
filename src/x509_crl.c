@@ -55,7 +55,7 @@ static int parsefile_lua( lua_State *L )
 {
 #if defined(MBEDTLS_FS_IO)
     mbedtls_x509_crl *crl = lauxh_checkudata( L, 1, LMBEDTLS_X509_CRL_MT );
-    const char *path = lauxh_checkstring( L, 1 );
+    const char *path = lauxh_checkstring( L, 2 );
     int rc = mbedtls_x509_crl_parse_file( crl, path );
 
     if( rc ){
